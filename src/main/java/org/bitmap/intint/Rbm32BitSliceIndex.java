@@ -3,6 +3,8 @@ package org.bitmap.intint;
 import org.bitmap.core.BitSliceIndex;
 import org.roaringbitmap.RoaringBitmap;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -265,6 +267,41 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         this.slices = slices;
     }
 
+    @Override
+    public void serialize(DataOutput output) throws IOException {
+        output.writeInt(this.minValue);
+        output.writeInt(this.maxValue);
+        output.writeInt(this.sliceSize);
+        output.writeInt(this.runOptimized ? (byte) 1 : (byte) 0);
+
+        this.ebm.serialize(output);
+        for (RoaringBitmap rb : this.slices) {
+            rb.serialize(output);
+        }
+    }
+
+    @Override
+    public void deserialize(DataInput in) throws IOException {
+        this.clear();
+
+        this.minValue = in.readInt();
+        this.maxValue = in.readInt();
+        this.sliceSize = in.readInt();
+        this.runOptimized = in.readInt() == (byte) 1;
+
+        RoaringBitmap ebm = new RoaringBitmap();
+        ebm.deserialize(in);
+        this.ebm = ebm;
+
+        RoaringBitmap[] slices = new RoaringBitmap[this.sliceSize];
+        for (int i = 0; i < this.sliceSize; i++) {
+            RoaringBitmap rb = new RoaringBitmap();
+            rb.deserialize(in);
+            slices[i] = rb;
+        }
+        this.slices = slices;
+    }
+
     //------------------------------------------------------------------------------------------
     // 内部方法
 
@@ -336,9 +373,10 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
             // 切片 i 包含指定的 key 则关联的 value 第 i 位为 1
             if (this.slices[i].contains(key)) {
                 value |= (1 << i);
+                this.slices[i].remove(key);
             }
-            this.slices[i].remove(key);
         }
+        this.ebm.remove(key);
         return value;
     }
 
