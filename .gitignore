@@ -12,3 +12,4 @@ package/*
 **.svn
 **target
 **logs/
+*.mvn
