@@ -24,6 +24,14 @@ public interface BitSliceIndex {
     int maxValue();
     int minValue();
 
+    RoaringBitmap eq(int value);
+    RoaringBitmap neq(int value);
+    RoaringBitmap le(int value);
+    RoaringBitmap lt(int value);
+    RoaringBitmap ge(int value);
+    RoaringBitmap gt(int value);
+    RoaringBitmap between(int lower, int upper);
+
     void serialize(ByteBuffer buffer) throws IOException;
     void deserialize(ByteBuffer buffer) throws IOException;
 

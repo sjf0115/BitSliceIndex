@@ -1,6 +1,7 @@
 package org.bitmap.intint;
 
 import org.bitmap.core.BitSliceIndex;
+import org.bitmap.core.Operation;
 import org.roaringbitmap.RoaringBitmap;
 
 import java.io.DataInput;
@@ -230,6 +231,86 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         return getValueInternal(maxValuesId.first());
     }
 
+    /**
+     * 范围查询 等于 value 的 key
+     * @param value 查找值
+     * @return 返回由等于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap eq(int value) {
+        return oNeilRange(Operation.EQ, value);
+    }
+
+    /**
+     * 范围查询 不等于 value 的 key
+     * @param value 查找值
+     * @return 返回由不等于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap neq(int value) {
+        return oNeilRange(Operation.NEQ, value);
+    }
+
+    /**
+     * 范围查询 小于等于 value 的 key
+     * @param value 查找值
+     * @return 返回由小于等于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap le(int value) {
+        return oNeilRange(Operation.LE, value);
+    }
+
+    /**
+     * 范围查询 小于 value 的 key
+     * @param value 查找值
+     * @return 返回由小于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap lt(int value) {
+        return oNeilRange(Operation.LT, value);
+    }
+
+    /**
+     * 范围查询 大于等于 value 的 key
+     * @param value 查找值
+     * @return 返回由大于等于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap ge(int value) {
+        return oNeilRange(Operation.GE, value);
+    }
+
+    /**
+     * 范围查询 大于 value 的 key
+     * @param value 查找值
+     * @return 返回由大于 value 的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap gt(int value) {
+        return oNeilRange(Operation.GT, value);
+    }
+
+    /**
+     * 范围查询 大于 value 的 key
+     * @param value 查找值
+     * @return 返回由大于 value 的 key 构成的 RoaringBitmap
+     */
+    /**
+     * 范围查询 [lower, upper] 区间内的 key
+     * @param lower 下限
+     * @param upper 上限
+     * @return 返回由[lower, upper] 区间内的 key 构成的 RoaringBitmap
+     */
+    @Override
+    public RoaringBitmap between(int lower, int upper) {
+        RoaringBitmap lowerBitmap = oNeilRange(Operation.GE, lower);
+        RoaringBitmap upperBitmap = oNeilRange(Operation.LE, upper);
+        RoaringBitmap resultBitmap = lowerBitmap;
+        resultBitmap.and(upperBitmap);
+        return resultBitmap;
+    }
+
     @Override
     public void serialize(ByteBuffer buffer) throws IOException {
         buffer.putInt(this.minValue);
@@ -393,6 +474,46 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
                 resize(this.sliceSize + 1);
             }
             this.mergeSliceInternal(carry, sliceIndex + 1);
+        }
+    }
+
+    /**
+     * oNeil 范围查询算法实现
+     * @param operation
+     * @param value
+     * @return
+     */
+    private RoaringBitmap oNeilRange(Operation operation, int value) {
+        RoaringBitmap GT = new RoaringBitmap();
+        RoaringBitmap LT = new RoaringBitmap();
+        RoaringBitmap EQ = this.ebm;
+
+        for (int i = this.sliceSize - 1; i >= 0; i--) {
+            int bit = (value >> i) & 1;
+            if (bit == 1) {
+                LT = RoaringBitmap.or(LT, RoaringBitmap.andNot(EQ, this.slices[i]));
+                EQ = RoaringBitmap.and(EQ, this.slices[i]);
+            } else {
+                GT = RoaringBitmap.or(GT, RoaringBitmap.and(EQ, this.slices[i]));
+                EQ = RoaringBitmap.andNot(EQ, this.slices[i]);
+            }
+        }
+
+        switch (operation) {
+            case EQ:
+                return EQ;
+            case NEQ:
+                return RoaringBitmap.andNot(this.ebm, EQ);
+            case GT:
+                return GT;
+            case LT:
+                return LT;
+            case LE:
+                return RoaringBitmap.or(LT, EQ);
+            case GE:
+                return RoaringBitmap.or(GT, EQ);
+            default:
+                throw new IllegalArgumentException("");
         }
     }
 }

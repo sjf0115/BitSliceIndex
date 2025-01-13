@@ -13,6 +13,9 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 /**
  * Rbm32BitSliceIndex 测试
  */
@@ -117,6 +120,8 @@ public class Rbm32BitSliceIndexTest {
         for (int key : keys) {
             System.out.println("Key: " + key);
         }
+        assertEquals(bitmap.getCardinality(),10);
+        assertArrayEquals(bitmap.toArray(), new int[]{1,2,3,4,5,6,7,8,9,10});
     }
 
     @Test
@@ -155,5 +160,76 @@ public class Rbm32BitSliceIndexTest {
         for (int key : keys) {
             System.out.println("Key: " + key);
         }
+    }
+
+    @Test
+    public void eqTest() {
+        RoaringBitmap eqBitmap = bsi.eq(57);
+        for (int key : eqBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(eqBitmap.getCardinality(),1);
+        assertArrayEquals(eqBitmap.toArray(), new int[]{6});
+    }
+
+    @Test
+    public void neqTest() {
+        RoaringBitmap neqBitmap = bsi.neq(57);
+        for (int key : neqBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(neqBitmap.getCardinality(),9);
+        assertArrayEquals(neqBitmap.toArray(), new int[]{1,2,3,4,5,7,8,9,10});
+    }
+
+
+    @Test
+    public void leTest() {
+        RoaringBitmap leBitmap = bsi.le(57);
+        for (int key : leBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(leBitmap.getCardinality(),6);
+        assertArrayEquals(leBitmap.toArray(), new int[]{1,4,5,6,8,10});
+    }
+
+    @Test
+    public void ltTest() {
+        RoaringBitmap ltBitmap = bsi.lt(57);
+        for (int key : ltBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(ltBitmap.getCardinality(),5);
+        assertArrayEquals(ltBitmap.toArray(), new int[]{1,4,5,8,10});
+    }
+
+    @Test
+    public void geTest() {
+        RoaringBitmap geBitmap = bsi.ge(57);
+        for (int key : geBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(geBitmap.getCardinality(),5);
+        assertArrayEquals(geBitmap.toArray(), new int[]{2,3,6,7,9});
+    }
+
+    @Test
+    public void gtTest() {
+        RoaringBitmap gtBitmap = bsi.gt(57);
+        for (int key : gtBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(gtBitmap.getCardinality(),4);
+        assertArrayEquals(gtBitmap.toArray(), new int[]{2,3,7,9});
+    }
+
+    @Test
+    public void betweenTest() {
+        RoaringBitmap betweenBitmap = bsi.between(57, 83);
+        for (int key : betweenBitmap.toArray()) {
+            System.out.println("Key: " + key);
+        }
+        assertEquals(betweenBitmap.getCardinality(),4);
+        assertArrayEquals(betweenBitmap.toArray(), new int[]{2,3,6,7});
     }
 }
