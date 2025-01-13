@@ -487,8 +487,9 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         RoaringBitmap GT = new RoaringBitmap();
         RoaringBitmap LT = new RoaringBitmap();
         RoaringBitmap EQ = this.ebm;
-
+        // 从高位到低位开始遍历
         for (int i = this.sliceSize - 1; i >= 0; i--) {
+            // 第 i 位的值 1或者0
             int bit = (value >> i) & 1;
             if (bit == 1) {
                 LT = RoaringBitmap.or(LT, RoaringBitmap.andNot(EQ, this.slices[i]));
