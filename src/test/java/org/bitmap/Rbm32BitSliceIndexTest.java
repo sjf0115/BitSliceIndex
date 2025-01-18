@@ -259,4 +259,15 @@ public class Rbm32BitSliceIndexTest {
         assertEquals(bsi.getLongCardinality(),11);
         assertArrayEquals(bsi.keys().toArray(), new int[]{1,2,3,4,5,6,7,8,9,10,11});
     }
+
+    @Test
+    public void test() {
+        RoaringBitmap keys = bsi.eq(10);
+        for (int key : bsi.keys()) {
+            System.out.println("BSI Key: " + key);
+        }
+        for (int key : keys.toArray()) {
+            System.out.println("克隆 BSI Key: " + key);
+        }
+    }
 }

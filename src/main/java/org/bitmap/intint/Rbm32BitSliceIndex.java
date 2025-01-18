@@ -181,7 +181,8 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      */
     @Override
     public RoaringBitmap keys() {
-        return this.ebm;
+        // ebm 只能通过 bsi 方法操作
+        return this.ebm.clone();
     }
 
     @Override
@@ -527,7 +528,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     private RoaringBitmap oNeilRange(Operation operation, int value) {
         RoaringBitmap GT = new RoaringBitmap();
         RoaringBitmap LT = new RoaringBitmap();
-        RoaringBitmap EQ = this.ebm;
+        RoaringBitmap EQ = this.ebm; // 不需要 this.ebm.clone()
         // 从高位到低位开始遍历
         for (int i = this.sliceSize - 1; i >= 0; i--) {
             // 第 i 位的值 1或者0
