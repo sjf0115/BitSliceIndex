@@ -31,12 +31,13 @@ public interface BitSliceIndex {
     RoaringBitmap ge(int value);
     RoaringBitmap gt(int value);
     RoaringBitmap between(int lower, int upper);
+    Long sum(RoaringBitmap rbm);
 
     void serialize(ByteBuffer buffer) throws IOException;
     void deserialize(ByteBuffer buffer) throws IOException;
-
     void serialize(DataOutput output) throws IOException;
     void deserialize(DataInput in) throws IOException;
+
 //    byte[] serialize() throws IOException;
 //    void deserialize(byte[] bytes) throws IOException;
 }

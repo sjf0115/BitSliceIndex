@@ -12,6 +12,7 @@ import java.sql.Array;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -231,5 +232,13 @@ public class Rbm32BitSliceIndexTest {
         }
         assertEquals(betweenBitmap.getCardinality(),4);
         assertArrayEquals(betweenBitmap.toArray(), new int[]{2,3,6,7});
+    }
+
+    @Test
+    public void sumTest() {
+        RoaringBitmap rbm = RoaringBitmap.bitmapOf(3,6,8,9);
+        long sum = bsi.sum(rbm);
+        System.out.println("Sum: " + sum);
+        assertEquals(250L, sum);
     }
 }

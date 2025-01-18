@@ -311,6 +311,24 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         return resultBitmap;
     }
 
+    /**
+     * 指定 Key 集合的 RoaringBitmap 计算 Value 的 SUM 值
+     * @param rbm Key 集合的 RoaringBitmap
+     * @return Value 的 SUM 值
+     */
+    @Override
+    public Long sum(RoaringBitmap rbm) {
+        if (null == rbm || rbm.isEmpty()) {
+            return 0L;
+        }
+        long sum = 0;
+        for (int i = 0; i < this.sliceSize; i ++) {
+            long sliceValue = 1 << i;
+            sum += sliceValue * RoaringBitmap.andCardinality(this.slices[i], rbm);
+        }
+        return sum;
+    }
+
     @Override
     public void serialize(ByteBuffer buffer) throws IOException {
         buffer.putInt(this.minValue);
