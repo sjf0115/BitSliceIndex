@@ -1,6 +1,7 @@
 package org.bitmap;
 
 
+import org.bitmap.core.BitSliceIndex;
 import org.bitmap.intint.Rbm32BitSliceIndex;
 import org.junit.Before;
 import org.junit.Test;
@@ -240,5 +241,22 @@ public class Rbm32BitSliceIndexTest {
         long sum = bsi.sum(rbm);
         System.out.println("Sum: " + sum);
         assertEquals(250L, sum);
+    }
+
+    @Test
+    public void cloneTest() {
+        BitSliceIndex cloneBsi = bsi.clone();
+        bsi.put(11, 34);
+        for (int key : bsi.keys()) {
+            System.out.println("BSI Key: " + key);
+        }
+        for (int key : cloneBsi.keys()) {
+            System.out.println("克隆 BSI Key: " + key);
+        }
+        assertEquals(cloneBsi.getLongCardinality(),10);
+        assertArrayEquals(cloneBsi.keys().toArray(), new int[]{1,2,3,4,5,6,7,8,9,10});
+
+        assertEquals(bsi.getLongCardinality(),11);
+        assertArrayEquals(bsi.keys().toArray(), new int[]{1,2,3,4,5,6,7,8,9,10,11});
     }
 }

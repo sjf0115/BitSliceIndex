@@ -232,6 +232,29 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
+     * 克隆
+     * @return
+     */
+    @Override
+    public BitSliceIndex clone() {
+        Rbm32BitSliceIndex bitSliceIndex = new Rbm32BitSliceIndex();
+        // 克隆属性
+        bitSliceIndex.minValue = this.minValue;
+        bitSliceIndex.maxValue = this.maxValue;
+        bitSliceIndex.sliceSize = this.sliceSize;
+        bitSliceIndex.runOptimized = this.runOptimized;
+        bitSliceIndex.ebm = this.ebm.clone();
+        // 克隆切片
+        RoaringBitmap[] cloneSlices = new RoaringBitmap[this.sliceSize];
+        for (int i = 0; i < cloneSlices.length; i++) {
+            cloneSlices[i] = this.slices[i].clone();
+        }
+        bitSliceIndex.slices = cloneSlices;
+        return bitSliceIndex;
+
+    }
+
+    /**
      * 范围查询 等于 value 的 key
      * @param value 查找值
      * @return 返回由等于 value 的 key 构成的 RoaringBitmap
