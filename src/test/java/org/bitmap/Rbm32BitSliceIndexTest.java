@@ -294,4 +294,30 @@ public class Rbm32BitSliceIndexTest {
             System.out.println("key: " + key + ", value: " + newBsi.get(key));
         }
     }
+
+    @Test
+    public void serializeStreamTest() throws IOException {
+        // 序列化
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(bos);
+        bsi.serialize(dos);
+        byte[] bytes = bos.toByteArray();
+
+        // 序列化
+        Rbm32BitSliceIndex newBsi = new Rbm32BitSliceIndex();
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        DataInputStream dis = new DataInputStream(bis);
+        newBsi.deserialize(dis);
+
+        assertEquals(10, newBsi.getLongCardinality());
+        IntStream.range(1, 10).forEach(
+                key -> {
+                    int value = newBsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
+        for (int key : newBsi.keys()) {
+            System.out.println("key: " + key + ", value: " + newBsi.get(key));
+        }
+    }
 }
