@@ -8,12 +8,14 @@ import org.junit.Test;
 import org.roaringbitmap.RoaringBitmap;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -29,16 +31,19 @@ public class Rbm32BitSliceIndexTest {
     public void init() {
         bsi = new Rbm32BitSliceIndex();
         // 用户ID(user_id)、积分(score)
-        bsi.put(1, 48);
-        bsi.put(2, 80);
-        bsi.put(3, 75);
-        bsi.put(4, 19);
-        bsi.put(5, 1);
-        bsi.put(6, 57);
-        bsi.put(7, 63);
-        bsi.put(8, 22);
-        bsi.put(9, 96);
-        bsi.put(10, 34);
+        initMap.put(1, 48);
+        initMap.put(2, 80);
+        initMap.put(3, 75);
+        initMap.put(4, 19);
+        initMap.put(5, 1);
+        initMap.put(6, 57);
+        initMap.put(7, 63);
+        initMap.put(8, 22);
+        initMap.put(9, 96);
+        initMap.put(10, 34);
+        for (int key : initMap.keySet()) {
+            bsi.put(key, initMap.get(key));
+        }
     }
 
     @Test
@@ -261,13 +266,32 @@ public class Rbm32BitSliceIndexTest {
     }
 
     @Test
-    public void test() {
-        RoaringBitmap keys = bsi.eq(10);
-        for (int key : bsi.keys()) {
-            System.out.println("BSI Key: " + key);
-        }
-        for (int key : keys.toArray()) {
-            System.out.println("克隆 BSI Key: " + key);
+    public void serializedSizeInBytesTest() {
+        int bytes = bsi.serializedSizeInBytes();
+        System.out.println("bytes: " + bytes);
+        assertEquals(223, bytes);
+    }
+
+    @Test
+    public void serializeByteBufferTest() throws IOException {
+        // 序列化
+        ByteBuffer buffer = ByteBuffer.allocate(bsi.serializedSizeInBytes());
+        bsi.serialize(buffer);
+
+        // 反序列化
+        byte[] bytes = buffer.array();
+        Rbm32BitSliceIndex newBsi = new Rbm32BitSliceIndex();
+        newBsi.deserialize(ByteBuffer.wrap(bytes));
+
+        assertEquals(10, newBsi.getLongCardinality());
+        IntStream.range(1, 10).forEach(
+                key -> {
+                    int value = newBsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
+        for (int key : newBsi.keys()) {
+            System.out.println("key: " + key + ", value: " + newBsi.get(key));
         }
     }
 }

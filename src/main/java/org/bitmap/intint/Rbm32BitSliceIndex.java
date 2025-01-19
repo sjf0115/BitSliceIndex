@@ -42,6 +42,8 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
             this.slices[i] = new RoaringBitmap();
         }
         this.ebm = new RoaringBitmap();
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     public Rbm32BitSliceIndex() {
@@ -353,76 +355,137 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         return sum;
     }
 
+
+    /**
+     * 序列化该 BSI 所需的字节大小
+     *   这是使用 serialize 方法时写入的字节数。
+     * @return 以字节为单位的大小
+     */
+    @Override
+    public int serializedSizeInBytes() {
+        int size = 0;
+        for (RoaringBitmap rbm : this.slices) {
+            size += rbm.serializedSizeInBytes();
+        }
+        // minValue、maxValue、sliceSize、runOptimized、ebm、slices
+        return 4 + 4 + 4 + 1 + 4 + this.ebm.serializedSizeInBytes() + size;
+    }
+
+    /**
+     * 序列化
+     * @param buffer
+     * @throws IOException
+     */
     @Override
     public void serialize(ByteBuffer buffer) throws IOException {
+        // 属性
         buffer.putInt(this.minValue);
         buffer.putInt(this.maxValue);
         buffer.putInt(this.sliceSize);
         buffer.put(this.runOptimized ? (byte) 1 : (byte) 0);
+        // ebm
         this.ebm.serialize(buffer);
-        for (RoaringBitmap rb : this.slices) {
-            rb.serialize(buffer);
+        // 切片
+        buffer.putInt(this.sliceSize);
+        for (RoaringBitmap rbm : this.slices) {
+            rbm.serialize(buffer);
         }
     }
 
+    /**
+     * 反序列化
+     * @param buffer
+     * @throws IOException
+     */
     @Override
     public void deserialize(ByteBuffer buffer) throws IOException {
         this.clear();
-
+        // 属性
         this.minValue = buffer.getInt();
         this.maxValue = buffer.getInt();
         this.sliceSize = buffer.getInt();
         this.runOptimized = buffer.get() == (byte) 1;
-
+        // ebm
         RoaringBitmap ebm = new RoaringBitmap();
         ebm.deserialize(buffer);
         this.ebm = ebm;
-
+        // 切片
         buffer.position(buffer.position() + ebm.serializedSizeInBytes());
-        int bitDepth = buffer.getInt();
-        RoaringBitmap[] slices = new RoaringBitmap[bitDepth];
-        for (int i = 0; i < bitDepth; i++) {
-            RoaringBitmap rb = new RoaringBitmap();
-            rb.deserialize(buffer);
-            slices[i] = rb;
-            buffer.position(buffer.position() + rb.serializedSizeInBytes());
+        this.sliceSize = buffer.getInt();
+        RoaringBitmap[] slices = new RoaringBitmap[this.sliceSize];
+        for (int i = 0; i < this.sliceSize; i++) {
+            RoaringBitmap rbm = new RoaringBitmap();
+            rbm.deserialize(buffer);
+            slices[i] = rbm;
+            buffer.position(buffer.position() + rbm.serializedSizeInBytes());
         }
         this.slices = slices;
     }
 
+    /**
+     * 序列化
+     * @param output
+     * @throws IOException
+     */
     @Override
     public void serialize(DataOutput output) throws IOException {
+        // 属性
         output.writeInt(this.minValue);
         output.writeInt(this.maxValue);
         output.writeInt(this.sliceSize);
         output.writeInt(this.runOptimized ? (byte) 1 : (byte) 0);
-
+        // ebm
         this.ebm.serialize(output);
-        for (RoaringBitmap rb : this.slices) {
-            rb.serialize(output);
+        // 切片
+        output.writeInt(this.sliceSize);
+        for (RoaringBitmap rbm : this.slices) {
+            rbm.serialize(output);
         }
     }
 
     @Override
     public void deserialize(DataInput in) throws IOException {
         this.clear();
-
+        // 属性
         this.minValue = in.readInt();
         this.maxValue = in.readInt();
         this.sliceSize = in.readInt();
         this.runOptimized = in.readInt() == (byte) 1;
-
+        // ebm
         RoaringBitmap ebm = new RoaringBitmap();
         ebm.deserialize(in);
         this.ebm = ebm;
-
+        // 切片
+        this.sliceSize = in.readInt();
         RoaringBitmap[] slices = new RoaringBitmap[this.sliceSize];
         for (int i = 0; i < this.sliceSize; i++) {
-            RoaringBitmap rb = new RoaringBitmap();
-            rb.deserialize(in);
-            slices[i] = rb;
+            RoaringBitmap rbm = new RoaringBitmap();
+            rbm.deserialize(in);
+            slices[i] = rbm;
         }
         this.slices = slices;
+    }
+
+    /**
+     * 序列化为字节数组
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public byte[] serialize() throws IOException {
+        byte[] bytes = new byte[this.serializedSizeInBytes()];
+        this.serialize(ByteBuffer.wrap(bytes));
+        return bytes;
+    }
+
+    /**
+     * 字节数组反序列化为 BSI
+     * @param bytes
+     * @throws IOException
+     */
+    @Override
+    public void deserialize(byte[] bytes) throws IOException {
+        this.deserialize(ByteBuffer.wrap(bytes));
     }
 
     //------------------------------------------------------------------------------------------
