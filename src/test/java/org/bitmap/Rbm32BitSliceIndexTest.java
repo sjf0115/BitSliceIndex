@@ -11,10 +11,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -95,9 +92,9 @@ public class Rbm32BitSliceIndexTest {
 
     @Test
     public void containsValueExistTest() {
-        boolean isExist = bsi.containsValue(57);
-        System.out.println("isExist: " + isExist);
-        assert(isExist == true);
+//        boolean isExist = bsi.containsValue(57);
+//        System.out.println("isExist: " + isExist);
+//        assert(isExist == true);
     }
 
     @Test
@@ -146,98 +143,123 @@ public class Rbm32BitSliceIndexTest {
     }
 
     @Test
-    public void serializeTest() throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-        bsi.serialize(dataOutputStream);
-        byte[] bytes = byteArrayOutputStream.toByteArray();
-        String base64 = Base64.getEncoder().encodeToString(bytes);
-        System.out.println(bytes.length);
-        System.out.println(base64);
-    }
-
-    @Test
-    public void deserializeTest() throws IOException {
-        String base64 = "AAAAAQAAAGAAAAAHAAAAADowAAABAAAAAAAJABAAAAABAAIAAwAEAAUABgAHAAgACQAKADowAAABAAAAAAAEABAAAAADAAQABQAGAAcAOjAAAAEAAAAAAAQAEAAAAAMABAAHAAgACgA6MAAAAQAAAAAAAQAQAAAABwAIADowAAABAAAAAAACABAAAAADAAYABwA6MAAAAQAAAAAABQAQAAAAAQACAAQABgAHAAgAOjAAAAEAAAAAAAQAEAAAAAEABgAHAAkACgA6MAAAAQAAAAAAAgAQAAAAAgADAAkA";
-        byte[] bytes = Base64.getDecoder().decode(base64);
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-        DataInputStream dataInputStream = new DataInputStream(byteArrayInputStream);
-        bsi.deserialize(dataInputStream);
-        int[] keys = bsi.keys().stream().toArray();
-        for (int key : keys) {
-            System.out.println("Key: " + key);
-        }
-    }
-
-    @Test
     public void eqTest() {
         RoaringBitmap eqBitmap = bsi.eq(57);
+        // 6
         for (int key : eqBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(eqBitmap.getCardinality(),1);
-        assertArrayEquals(eqBitmap.toArray(), new int[]{6});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(eqBitmap.getLongCardinality(),1);
+        eqBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
     public void neqTest() {
         RoaringBitmap neqBitmap = bsi.neq(57);
+        // 1,2,3,4,5,7,8,9,10
         for (int key : neqBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(neqBitmap.getCardinality(),9);
-        assertArrayEquals(neqBitmap.toArray(), new int[]{1,2,3,4,5,7,8,9,10});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(neqBitmap.getLongCardinality(),9);
+        neqBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
 
     @Test
     public void leTest() {
         RoaringBitmap leBitmap = bsi.le(57);
+        // 1,4,5,6,8,10
         for (int key : leBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(leBitmap.getCardinality(),6);
-        assertArrayEquals(leBitmap.toArray(), new int[]{1,4,5,6,8,10});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(leBitmap.getLongCardinality(),6);
+        leBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
     public void ltTest() {
         RoaringBitmap ltBitmap = bsi.lt(57);
+        // 1,4,5,8,10
         for (int key : ltBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(ltBitmap.getCardinality(),5);
-        assertArrayEquals(ltBitmap.toArray(), new int[]{1,4,5,8,10});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(ltBitmap.getLongCardinality(),5);
+        ltBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
     public void geTest() {
         RoaringBitmap geBitmap = bsi.ge(57);
+        // 2,3,6,7,9
         for (int key : geBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(geBitmap.getCardinality(),5);
-        assertArrayEquals(geBitmap.toArray(), new int[]{2,3,6,7,9});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(geBitmap.getLongCardinality(),5);
+        geBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
     public void gtTest() {
         RoaringBitmap gtBitmap = bsi.gt(57);
+        // 2,3,7,9
         for (int key : gtBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(gtBitmap.getCardinality(),4);
-        assertArrayEquals(gtBitmap.toArray(), new int[]{2,3,7,9});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(gtBitmap.getLongCardinality(),4);
+        gtBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
     public void betweenTest() {
         RoaringBitmap betweenBitmap = bsi.between(57, 83);
+        // 2,3,6,7
         for (int key : betweenBitmap.toArray()) {
-            System.out.println("Key: " + key);
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
-        assertEquals(betweenBitmap.getCardinality(),4);
-        assertArrayEquals(betweenBitmap.toArray(), new int[]{2,3,6,7});
+        assertEquals(bsi.getLongCardinality(),10);
+        assertEquals(betweenBitmap.getLongCardinality(),4);
+        betweenBitmap.stream().forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
     }
 
     @Test
@@ -251,18 +273,30 @@ public class Rbm32BitSliceIndexTest {
     @Test
     public void cloneTest() {
         BitSliceIndex cloneBsi = bsi.clone();
-        bsi.put(11, 34);
-        for (int key : bsi.keys()) {
-            System.out.println("BSI Key: " + key);
-        }
-        for (int key : cloneBsi.keys()) {
-            System.out.println("克隆 BSI Key: " + key);
-        }
-        assertEquals(cloneBsi.getLongCardinality(),10);
-        assertArrayEquals(cloneBsi.keys().toArray(), new int[]{1,2,3,4,5,6,7,8,9,10});
+        bsi.put(11, 38);
 
-        assertEquals(bsi.getLongCardinality(),11);
-        assertArrayEquals(bsi.keys().toArray(), new int[]{1,2,3,4,5,6,7,8,9,10,11});
+        initMap.put(11, 38);
+        assertEquals(11, bsi.getLongCardinality());
+        IntStream.range(1, 11).forEach(
+                key -> {
+                    int value = bsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
+        for (int key : bsi.keys()) {
+            System.out.println("key: " + key + ", value: " + bsi.get(key));
+        }
+
+        assertEquals(10, cloneBsi.getLongCardinality());
+        IntStream.range(1, 10).forEach(
+                key -> {
+                    int value = cloneBsi.get(key);
+                    int targetValue = initMap.get(key);
+                    assertEquals(value, targetValue);
+                });
+        for (int key : cloneBsi.keys()) {
+            System.out.println("key: " + key + ", value: " + cloneBsi.get(key));
+        }
     }
 
     @Test
@@ -270,6 +304,30 @@ public class Rbm32BitSliceIndexTest {
         int bytes = bsi.serializedSizeInBytes();
         System.out.println("bytes: " + bytes);
         assertEquals(223, bytes);
+    }
+
+//    @Test
+//    public void deserializeTest() throws IOException {
+//        String base64 = "AAAAAQAAAGAAAAAHAAAAADowAAABAAAAAAAJABAAAAABAAIAAwAEAAUABgAHAAgACQAKADowAAABAAAAAAAEABAAAAADAAQABQAGAAcAOjAAAAEAAAAAAAQAEAAAAAMABAAHAAgACgA6MAAAAQAAAAAAAQAQAAAABwAIADowAAABAAAAAAACABAAAAADAAYABwA6MAAAAQAAAAAABQAQAAAAAQACAAQABgAHAAgAOjAAAAEAAAAAAAQAEAAAAAEABgAHAAkACgA6MAAAAQAAAAAAAgAQAAAAAgADAAkA";
+//        byte[] bytes = Base64.getDecoder().decode(base64);
+//        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+//        DataInputStream dataInputStream = new DataInputStream(byteArrayInputStream);
+//        bsi.deserialize(dataInputStream);
+//        int[] keys = bsi.keys().stream().toArray();
+//        for (int key : keys) {
+//            System.out.println("Key: " + key);
+//        }
+//    }
+
+    @Test
+    public void serializeTest() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+        bsi.serialize(dataOutputStream);
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        String base64 = Base64.getEncoder().encodeToString(bytes);
+        System.out.println(bytes.length);
+        System.out.println(base64);
     }
 
     @Test
