@@ -103,7 +103,8 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     public boolean containsValue(int value) {
-        return false;
+        RoaringBitmap bitmap = eq(value);
+        return !bitmap.isEmpty();
     }
 
     /**
@@ -198,19 +199,20 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      */
     @Override
     public int minValue() {
-        if (this.isEmpty()) {
-            return 0;
+        return minValue;
+        /*if (this.isEmpty()) {
+            return -1;
         }
 
-        RoaringBitmap minValuesId = ebm;
+        RoaringBitmap keys = ebm;
         for (int i = this.sliceSize - 1; i >= 0; i -= 1) {
-            RoaringBitmap tmp = RoaringBitmap.andNot(minValuesId, slices[i]);
+            RoaringBitmap tmp = RoaringBitmap.andNot(keys, slices[i]);
             if (!tmp.isEmpty()) {
-                minValuesId = tmp;
+                keys = tmp;
             }
         }
 
-        return getValueInternal(minValuesId.first());
+        return getValueInternal(keys.first());*/
     }
 
     /**
@@ -219,19 +221,20 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      */
     @Override
     public int maxValue() {
-        if (this.isEmpty()) {
-            return 0;
+        return maxValue;
+        /*if (this.isEmpty()) {
+            return -1;
         }
 
-        RoaringBitmap maxValuesId = ebm;
+        RoaringBitmap keys = ebm;
         for (int i = this.sliceSize - 1; i >= 0; i -= 1) {
-            RoaringBitmap tmp = RoaringBitmap.and(maxValuesId, slices[i]);
+            RoaringBitmap tmp = RoaringBitmap.and(keys, slices[i]);
             if (!tmp.isEmpty()) {
-                maxValuesId = tmp;
+                keys = tmp;
             }
         }
 
-        return getValueInternal(maxValuesId.first());
+        return getValueInternal(keys.first());*/
     }
 
     /**
@@ -254,7 +257,6 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         }
         bitSliceIndex.slices = cloneSlices;
         return bitSliceIndex;
-
     }
 
     /**
@@ -318,11 +320,6 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 范围查询 大于 value 的 key
-     * @param value 查找值
-     * @return 返回由大于 value 的 key 构成的 RoaringBitmap
-     */
-    /**
      * 范围查询 [lower, upper] 区间内的 key
      * @param lower 下限
      * @param upper 上限
@@ -354,7 +351,6 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         }
         return sum;
     }
-
 
     /**
      * 序列化该 BSI 所需的字节大小
