@@ -61,7 +61,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 基数基数
+     * BSI 基数,即 Key 的个数
      * @return
      */
     @Override
@@ -89,7 +89,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 指定的 key 是否关联指定的 value
+     * 指定的 key 是否有对应的 value
      * @param key
      * @return
      */
@@ -185,6 +185,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     @Override
     public RoaringBitmap keys() {
         // ebm 只能通过 bsi 方法操作
+        // return this.ebm ?
         return this.ebm.clone();
     }
 
@@ -335,7 +336,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 指定 Key 集合的 RoaringBitmap 计算 Value 的 SUM 值
+     * 指定 Key 的 Value 求和
      * @param rbm Key 集合的 RoaringBitmap
      * @return Value 的 SUM 值
      */
@@ -363,8 +364,9 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         for (RoaringBitmap rbm : this.slices) {
             size += rbm.serializedSizeInBytes();
         }
-        // minValue、maxValue、sliceSize、runOptimized、ebm、slices
-        return 4 + 4 + 4 + 1 + 4 + this.ebm.serializedSizeInBytes() + size;
+        // minValue(4)、maxValue(4)、sliceSize(4)、runOptimized(1)、ebm(ebm.serializedSizeInBytes)、slices(4+size)
+        // 与 serialize 方法一一对应
+        return 4 + 4 + 4 + 1 + this.ebm.serializedSizeInBytes() + 4 + size;
     }
 
     /**
@@ -381,7 +383,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         buffer.put(this.runOptimized ? (byte) 1 : (byte) 0);
         // ebm
         this.ebm.serialize(buffer);
-        // 切片
+        // 切片数组(切片个数、切片)
         buffer.putInt(this.sliceSize);
         for (RoaringBitmap rbm : this.slices) {
             rbm.serialize(buffer);
@@ -484,6 +486,20 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         this.deserialize(ByteBuffer.wrap(bytes));
     }
 
+    /**
+     * BSI 压缩优化
+     */
+    @Override
+    public void runOptimize() {
+        // ebm 压缩优化
+        this.ebm.runOptimize();
+        // 切片压缩优化
+        for (RoaringBitmap slice : this.slices) {
+            slice.runOptimize();
+        }
+        this.runOptimized = true;
+    }
+
     //------------------------------------------------------------------------------------------
     // 内部方法
 
@@ -512,16 +528,18 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 为指定的 Key 关联指定的 Value
+     * 为指定的 Key 设置 Value
      * @param key
      * @param value
      */
     private void putValueInternal(int key, int value) {
-        // 为 value 的每个切片 bitmap 添加 x
+        // 为 value 的每个切片 bitmap 添加 key
+        // 从低位到高位遍历，如果 value 对应的 bit 位为 1 则对应的切片 Bitmap 添加 key
         for (int i = 0; i < this.sliceSize(); i += 1) {
             if ((value & (1 << i)) > 0) {
                 this.slices[i].add(key);
             } else {
+                // 是否需要删除？
                 this.slices[i].remove(key);
             }
         }
@@ -529,14 +547,14 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 获取指定 key 关联的 value
+     * 获取指定 key 的 value
      * @param key
      * @return
      */
     private int getValueInternal(int key) {
         int value = 0;
         for (int i = 0; i < this.sliceSize; i += 1) {
-            // 切片 i 包含指定的 key 则关联的 value 第 i 位为 1
+            // 切片 i 包含指定的 key 则对应 value 的第 i 位为 1
             if (this.slices[i].contains(key)) {
                 value |= (1 << i);
             }
@@ -545,7 +563,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 删除指定 key 关联的 value
+     * 删除指定 key 的 value
      * @param key
      * @return
      */

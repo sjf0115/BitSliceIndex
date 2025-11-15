@@ -92,9 +92,7 @@ public class Rbm32BitSliceIndexTest {
 
     @Test
     public void containsValueExistTest() {
-//        boolean isExist = bsi.containsValue(57);
-//        System.out.println("isExist: " + isExist);
-//        assert(isExist == true);
+
     }
 
     @Test

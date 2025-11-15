@@ -42,4 +42,6 @@ public interface BitSliceIndex {
     void deserialize(DataInput in) throws IOException;
     byte[] serialize() throws IOException;
     void deserialize(byte[] bytes) throws IOException;
+
+    void runOptimize();
 }
