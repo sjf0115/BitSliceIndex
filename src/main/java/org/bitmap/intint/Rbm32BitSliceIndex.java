@@ -19,7 +19,7 @@ import java.util.Objects;
  * 公众号：大数据生态
  * 日期：2024/6/16 00:52
  */
-public class Rbm32BitSliceIndex implements BitSliceIndex {
+public class Rbm32BitSliceIndex implements BitSliceIndex<Integer, Integer> {
     private int maxValue = -1;
     private int minValue = -1;
     private int sliceSize = 0;
@@ -32,7 +32,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param minValue 最小值
      * @param maxValue 最大值
      */
-    public Rbm32BitSliceIndex(int minValue, int maxValue) {
+    public Rbm32BitSliceIndex(Integer minValue, Integer maxValue) {
         if (minValue < 0) {
             throw new IllegalArgumentException("Value should be non-negative");
         }
@@ -95,7 +95,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param key
      * @return
      */
-    public boolean containsKey(int key) {
+    public boolean containsKey(Integer key) {
         return this.ebm.contains(key);
     }
 
@@ -104,7 +104,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param value
      * @return
      */
-    public boolean containsValue(int value) {
+    public boolean containsValue(Integer value) {
         RoaringBitmap bitmap = eq(value);
         return !bitmap.isEmpty();
     }
@@ -115,7 +115,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param value
      */
     @Override
-    public void put(int key, int value) {
+    public void put(Integer key, Integer value) {
         // 更新最大值和最小值
         if (this.isEmpty()) {
             this.minValue = value;
@@ -159,7 +159,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     @Override
-    public int get(int key) {
+    public Integer get(Integer key) {
         if (!this.containsKey(key)) {
             return -1;
         }
@@ -172,7 +172,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 如果指定 key 关联的 value 不存在返回 -1，否则返回 value
      */
     @Override
-    public int remove(int key) {
+    public Integer remove(Integer key) {
         // 不存在返回 -1
         if (!this.containsKey(key)) {
             return -1;
@@ -201,7 +201,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     @Override
-    public int minValue() {
+    public Integer minValue() {
         return minValue;
     }
 
@@ -211,7 +211,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     @Override
-    public int minValue(RoaringBitmap rbm) {
+    public Integer minValue(RoaringBitmap rbm) {
         if (this.isEmpty() || Objects.equals(rbm, null) || rbm.getLongCardinality() == 0) {
             return -1;
         }
@@ -232,7 +232,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     @Override
-    public int maxValue() {
+    public Integer maxValue() {
         return maxValue;
     }
 
@@ -241,7 +241,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     @Override
-    public int maxValue(RoaringBitmap rbm) {
+    public Integer maxValue(RoaringBitmap rbm) {
         if (this.isEmpty() || Objects.equals(rbm, null) || rbm.getLongCardinality() == 0) {
             return -1;
         }
@@ -265,7 +265,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return
      */
     @Override
-    public BitSliceIndex clone() {
+    public Rbm32BitSliceIndex clone() {
         Rbm32BitSliceIndex bitSliceIndex = new Rbm32BitSliceIndex();
         // 克隆属性
         bitSliceIndex.minValue = this.minValue;
@@ -288,7 +288,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由等于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap eq(int value) {
+    public RoaringBitmap eq(Integer value) {
         return oNeilRange(Operation.EQ, value);
     }
 
@@ -298,7 +298,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由不等于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap neq(int value) {
+    public RoaringBitmap neq(Integer value) {
         return oNeilRange(Operation.NEQ, value);
     }
 
@@ -308,7 +308,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由小于等于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap le(int value) {
+    public RoaringBitmap le(Integer value) {
         return oNeilRange(Operation.LE, value);
     }
 
@@ -318,7 +318,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由小于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap lt(int value) {
+    public RoaringBitmap lt(Integer value) {
         return oNeilRange(Operation.LT, value);
     }
 
@@ -328,7 +328,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由大于等于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap ge(int value) {
+    public RoaringBitmap ge(Integer value) {
         return oNeilRange(Operation.GE, value);
     }
 
@@ -338,7 +338,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由大于 value 的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap gt(int value) {
+    public RoaringBitmap gt(Integer value) {
         return oNeilRange(Operation.GT, value);
     }
 
@@ -349,7 +349,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @return 返回由[lower, upper] 区间内的 key 构成的 RoaringBitmap
      */
     @Override
-    public RoaringBitmap between(int lower, int upper) {
+    public RoaringBitmap between(Integer lower, Integer upper) {
         RoaringBitmap lowerBitmap = oNeilRange(Operation.GE, lower);
         RoaringBitmap upperBitmap = oNeilRange(Operation.LE, upper);
         RoaringBitmap resultBitmap = lowerBitmap;
@@ -554,7 +554,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param key
      * @param value
      */
-    private void putValueInternal(int key, int value) {
+    private void putValueInternal(Integer key, Integer value) {
         // 在 value 二进制位对应切片 Bitmap 中添加 key
         // 从低位到高位切片 Bitmap 遍历，如果 value 二进制位对应的 bit 为 1 则对应的切片 Bitmap 添加 key
         for (int i = 0; i < this.sliceSize(); i += 1) {
@@ -573,7 +573,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param key
      * @return
      */
-    private int getValueInternal(int key) {
+    private Integer getValueInternal(Integer key) {
         int value = 0;
         for (int i = 0; i < this.sliceSize; i += 1) {
             if (this.slices[i].contains(key)) {
@@ -589,7 +589,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param key
      * @return
      */
-    private int removeValueInternal(int key) {
+    private Integer removeValueInternal(Integer key) {
         int value = 0;
         // 从低位到高位遍历切片 Bitmap
         for (int i = 0; i < this.sliceSize; i += 1) {
@@ -628,7 +628,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param value
      * @return
      */
-    private RoaringBitmap oNeilRange(Operation operation, int value) {
+    private RoaringBitmap oNeilRange(Operation operation, Integer value) {
         RoaringBitmap GT = new RoaringBitmap();
         RoaringBitmap LT = new RoaringBitmap();
         RoaringBitmap EQ = this.ebm; // 不需要 this.ebm.clone()

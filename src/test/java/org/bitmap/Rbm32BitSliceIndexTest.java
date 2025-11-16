@@ -299,7 +299,7 @@ public class Rbm32BitSliceIndexTest {
 
     @Test
     public void cloneTest() {
-        BitSliceIndex cloneBsi = bsi.clone();
+        Rbm32BitSliceIndex cloneBsi = bsi.clone();
         bsi.put(11, 38);
 
         initMap.put(11, 38);
@@ -310,15 +310,15 @@ public class Rbm32BitSliceIndexTest {
                     int targetValue = initMap.get(key);
                     assertEquals(value, targetValue);
                 });
-        for (int key : bsi.keys()) {
+        for (Integer key : bsi.keys()) {
             System.out.println("key: " + key + ", value: " + bsi.get(key));
         }
 
         assertEquals(10, cloneBsi.getLongCardinality());
         IntStream.range(1, 10).forEach(
                 key -> {
-                    int value = cloneBsi.get(key);
-                    int targetValue = initMap.get(key);
+                    Integer value = cloneBsi.get(key);
+                    Integer targetValue = initMap.get(key);
                     assertEquals(value, targetValue);
                 });
         for (int key : cloneBsi.keys()) {

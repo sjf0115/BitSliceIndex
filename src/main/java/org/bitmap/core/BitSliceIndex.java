@@ -8,37 +8,37 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
-public interface BitSliceIndex {
+public interface BitSliceIndex<K,V> {
     // 基础操作
     int sliceSize();
     long getLongCardinality();
     boolean isEmpty();
     BitSliceIndex clone();
     // 插入操作
-    void put(int key, int value);
+    void put(K key, V value);
     void putAll(BitSliceIndex otherBsi);
     // 删除操作
     void clear();
-    int remove(int key);
+    V remove(K key);
     // 精确查询操作
-    boolean containsKey(int key);
-    boolean containsValue(int value);
-    int get(int key);
+    boolean containsKey(K key);
+    boolean containsValue(V value);
+    V get(K key);
     RoaringBitmap keys();
     Collection<Integer> values();
     // 极值查询操作
-    int maxValue();
-    int maxValue(RoaringBitmap rbm);
-    int minValue();
-    int minValue(RoaringBitmap rbm);
+    V maxValue();
+    V maxValue(RoaringBitmap rbm);
+    V minValue();
+    V minValue(RoaringBitmap rbm);
     // 范围查询操作
-    RoaringBitmap eq(int value);
-    RoaringBitmap neq(int value);
-    RoaringBitmap le(int value);
-    RoaringBitmap lt(int value);
-    RoaringBitmap ge(int value);
-    RoaringBitmap gt(int value);
-    RoaringBitmap between(int lower, int upper);
+    RoaringBitmap eq(V value);
+    RoaringBitmap neq(V value);
+    RoaringBitmap le(V value);
+    RoaringBitmap lt(V value);
+    RoaringBitmap ge(V value);
+    RoaringBitmap gt(V value);
+    RoaringBitmap between(V lower, V upper);
     Long sum(RoaringBitmap rbm);
     // 序列化操作
     int serializedSizeInBytes();
