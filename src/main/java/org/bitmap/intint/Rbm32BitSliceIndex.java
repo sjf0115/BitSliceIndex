@@ -9,6 +9,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * 功能：Rbm32BitSliceIndex 整数
@@ -79,6 +80,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
 
     /**
      * 从 BSI 中删除所有的映射，BSI 变空
+     * 清空所有的 Key
      */
     public void clear() {
         this.maxValue = -1;
@@ -126,7 +128,7 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
         // 调整切片个数
         int newSliceSize = Integer.toBinaryString(value).length();
         resize(newSliceSize);
-        // 为指定 Key 关联指定 Value
+        // 为指定的 Key 设置 Value
         putValueInternal(key, value);
     }
 
@@ -165,13 +167,13 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 删除指定 key 关联的 value
-     *
+     * 删除指定 key 的 value
      * @param key 删除指定的 key
      * @return 如果指定 key 关联的 value 不存在返回 -1，否则返回 value
      */
     @Override
     public int remove(int key) {
+        // 不存在返回 -1
         if (!this.containsKey(key)) {
             return -1;
         }
@@ -201,41 +203,61 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     @Override
     public int minValue() {
         return minValue;
-        /*if (this.isEmpty()) {
+    }
+
+    /**
+     * 查询指定 Key 集合中的最小值
+     * @param rbm Key 集合
+     * @return
+     */
+    @Override
+    public int minValue(RoaringBitmap rbm) {
+        if (this.isEmpty() || Objects.equals(rbm, null) || rbm.getLongCardinality() == 0) {
             return -1;
         }
-
-        RoaringBitmap keys = ebm;
+        // 指定 Key 与 BSI 中 Key 的交集
+        RoaringBitmap keys = RoaringBitmap.and(rbm, ebm);
+        if (keys.getLongCardinality() == 0) {
+            return -1;
+        }
+        // 查询最小值
         for (int i = this.sliceSize - 1; i >= 0; i -= 1) {
             RoaringBitmap tmp = RoaringBitmap.andNot(keys, slices[i]);
             if (!tmp.isEmpty()) {
                 keys = tmp;
             }
         }
-
-        return getValueInternal(keys.first());*/
+        // 可能存在多个 Key 拥有最小值
+        return getValueInternal(keys.first());
     }
 
-    /**
-     * 最大值
-     * @return
-     */
     @Override
     public int maxValue() {
         return maxValue;
-        /*if (this.isEmpty()) {
+    }
+
+    /**
+     * 查询指定 Key 集合中的最大值
+     * @return
+     */
+    @Override
+    public int maxValue(RoaringBitmap rbm) {
+        if (this.isEmpty() || Objects.equals(rbm, null) || rbm.getLongCardinality() == 0) {
             return -1;
         }
-
-        RoaringBitmap keys = ebm;
+        // 指定 Key 与 BSI 中 Key 的交集
+        RoaringBitmap keys = RoaringBitmap.and(rbm, ebm);
+        if (keys.getLongCardinality() == 0) {
+            return -1;
+        }
         for (int i = this.sliceSize - 1; i >= 0; i -= 1) {
             RoaringBitmap tmp = RoaringBitmap.and(keys, slices[i]);
             if (!tmp.isEmpty()) {
                 keys = tmp;
             }
         }
-
-        return getValueInternal(keys.first());*/
+        // 可能存在多个 Key 拥有最大值
+        return getValueInternal(keys.first());
     }
 
     /**
@@ -533,13 +555,13 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
      * @param value
      */
     private void putValueInternal(int key, int value) {
-        // 为 value 的每个切片 bitmap 添加 key
-        // 从低位到高位遍历，如果 value 对应的 bit 位为 1 则对应的切片 Bitmap 添加 key
+        // 在 value 二进制位对应切片 Bitmap 中添加 key
+        // 从低位到高位切片 Bitmap 遍历，如果 value 二进制位对应的 bit 为 1 则对应的切片 Bitmap 添加 key
         for (int i = 0; i < this.sliceSize(); i += 1) {
             if ((value & (1 << i)) > 0) {
                 this.slices[i].add(key);
             } else {
-                // 是否需要删除？
+                // 一个 Key 只能设置一个 Value，旧值会被新值覆盖
                 this.slices[i].remove(key);
             }
         }
@@ -554,8 +576,8 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     private int getValueInternal(int key) {
         int value = 0;
         for (int i = 0; i < this.sliceSize; i += 1) {
-            // 切片 i 包含指定的 key 则对应 value 的第 i 位为 1
             if (this.slices[i].contains(key)) {
+                // 通过位图反向重建原始值
                 value |= (1 << i);
             }
         }
@@ -563,19 +585,23 @@ public class Rbm32BitSliceIndex implements BitSliceIndex {
     }
 
     /**
-     * 删除指定 key 的 value
+     * 删除指定 key
      * @param key
      * @return
      */
     private int removeValueInternal(int key) {
         int value = 0;
+        // 从低位到高位遍历切片 Bitmap
         for (int i = 0; i < this.sliceSize; i += 1) {
-            // 切片 i 包含指定的 key 则关联的 value 第 i 位为 1
+            // 切片包含指定的 key 则从切片中移除该 Key 并重建原始值
             if (this.slices[i].contains(key)) {
+                // 通过位移操作反向重建原始值
                 value |= (1 << i);
+                // 移除对应的 Key
                 this.slices[i].remove(key);
             }
         }
+        // 存在位图移除对应的 Key
         this.ebm.remove(key);
         return value;
     }

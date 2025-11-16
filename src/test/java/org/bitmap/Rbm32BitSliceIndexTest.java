@@ -65,15 +65,26 @@ public class Rbm32BitSliceIndexTest {
     }
 
     @Test
-    public void putTest() {
-        bsi.put(11, 12);
-    }
-
-    @Test
     public void getTest() {
         int value = bsi.get(10);
         System.out.println("Value: " + value);
         assert(value == 34);
+    }
+
+    @Test
+    public void putTest() {
+        bsi.put(11, 12);
+        int value = bsi.get(11);
+        System.out.println("Value: " + value);
+        assert(value == 12);
+    }
+
+    @Test
+    public void putExistKeyTest() {
+        bsi.put(10, 9);
+        int value = bsi.get(10);
+        System.out.println("Value: " + value);
+        assert(value == 9);
     }
 
     @Test
@@ -134,10 +145,28 @@ public class Rbm32BitSliceIndexTest {
     }
 
     @Test
+    public void maxValueByKeysTest() {
+        RoaringBitmap rbm = new RoaringBitmap();
+        rbm.add(3,4,6,7);
+        int maxValue = bsi.maxValue(rbm);
+        System.out.println("MaxValue: " + maxValue);
+        assert(maxValue == 75);
+    }
+
+    @Test
     public void minValueTest() {
         int minValue = bsi.minValue();
         System.out.println("MinValue: " + minValue);
         assert(minValue == 1);
+    }
+
+    @Test
+    public void minValueByKeysTest() {
+        RoaringBitmap rbm = new RoaringBitmap();
+        rbm.add(3,4,6,7);
+        int minValue = bsi.minValue(rbm);
+        System.out.println("MinValue: " + minValue);
+        assert(minValue == 19);
     }
 
     @Test
